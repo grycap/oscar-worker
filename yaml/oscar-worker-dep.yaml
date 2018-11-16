@@ -1,0 +1,34 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: oscar-worker
+  namespace: oscar
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: queue-worker
+    spec:
+      serviceAccountName: oscar-worker-controller
+      containers:
+      - name:  oscar-queue-worker
+        image: grycap/oscar-worker:latest
+        imagePullPolicy: Always
+        # env:
+        # - name: max_inflight      # Max number of items in-flight
+        #   value: "1"
+        # - name: ack_wait          # Max duration of any async task / request
+        #   value: "30s"
+        # - name: faas_function_suffix
+        #   value: ".openfaas-fn.svc.cluster.local."  # absolute DNS will suppress search domains
+        # - name: basic_auth
+        #   value: "false"
+        # - name: secret_mount_path
+        #   value: "/etc/openfaas"
+        # Adjust resources to suit needs of deployment
+        resources:
+          requests:
+            memory: 250Mi
+          limits:
+            memory: 250Mi
