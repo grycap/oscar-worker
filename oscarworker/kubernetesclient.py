@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from packaging import version
 import requests
 import oscarworker.utils as utils
 import oscarworker.eventutils as eventutils
@@ -21,6 +22,7 @@ class KubernetesClient:
 
     deployment_list_path = '/apis/apps/v1/namespaces/openfaas-fn/deployments/'
     create_job_path = '/apis/batch/v1/namespaces/oscar/jobs'
+    nodes_info_path = '/api/v1/nodes'
 
     def __init__(self, token=None):
         if token:
@@ -67,10 +69,14 @@ class KubernetesClient:
             return None
         return deployment_info
 
-    # TODO
-    # API /api/v1/nodes -> ['items'][0]['status']['nodeInfo']['kubeletVersion']
-    # Versions in format: 'v1.12.2'
-    #def _get_kubernetes_version(self):
+    @utils.lazy_property
+    def _get_kubernetes_version(self):
+        url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.nodes_info_path)
+        nodes_info = self._create_request('GET', url)
+        if not nodes_info:
+            print('Error getting nodes info')
+            return None
+        return version.parse(nodes_info['items'][0]['status']['nodeInfo']['kubeletVersion'])
 
 
     def _create_job_definition(self, event):
@@ -113,10 +119,9 @@ class KubernetesClient:
         }
         job['spec']['template']['spec']['containers'][0]['env'].append(event_variable)
 
-        # TODO: Add ttlSecondsAfterFinished option if Kubernetes version is >= 1.12
-        # version = self._get_kubernetes_version()
-        # if version ...:
-        #     job['spec']['ttlSecondsAfterFinished'] = self.job_ttl_seconds_after_finished
+        # Add ttlSecondsAfterFinished option if Kubernetes version is >= 1.12
+        if self._get_kubernetes_version() >= version.parse('v1.12'):
+            job['spec']['ttlSecondsAfterFinished'] = self.job_ttl_seconds_after_finished
 
         return job
 
@@ -126,4 +131,4 @@ class KubernetesClient:
 
         resp = self._create_request('POST', url, body=definition)
         if resp:
-            print('Job {0} created successfully').format()
+            print('Job {0} created successfully').format(definition['metadata']['name'])
