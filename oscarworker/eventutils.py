@@ -12,3 +12,27 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import json
+import oscarworker.utils as utils
+
+def is_cloudevent(event):
+    if 'eventID' in event and 'data' in event:
+        return True
+    else:
+        return False
+
+def extract_cloudevent(event):
+    return event['data']['body']
+
+def get_function_name(event):
+    if is_cloudevent(event):
+        event = extract_cloudevent(event)
+    # remove '-in'
+    return event["Records"][0]["s3"]["bucket"]["name"][:-3]
+
+def get_event_id(event):
+    if is_cloudevent(event):
+        return event['eventID']
+    else:
+        return str(uuid.uuid4())

@@ -15,6 +15,7 @@
 
 import requests
 import oscarworker.utils as utils
+import oscarworker.eventutils as eventutils
 
 class KubernetesClient:
 
@@ -66,11 +67,15 @@ class KubernetesClient:
             return None
         return deployment_info
 
-    #TODO
+    # TODO
+    # API /api/v1/nodes -> ['items'][0]['status']['nodeInfo']['kubeletVersion']
+    # Versions in format: 'v1.12.2'
     #def _get_kubernetes_version(self):
 
 
-    def _create_job_definition(self, function_name, event):
+    def _create_job_definition(self, event):
+        function_name = eventutils.get_function_name(event)
+        event_id = eventutils.get_event_id(event)
         deployment_info = self._get_deployment_info(function_name)
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
@@ -79,7 +84,7 @@ class KubernetesClient:
             'apiVersion': 'batch/v1',
             'kind': 'Job',
             'metadata': {
-                'name': container_info['name'] + '-job',
+                'name': function_name + '-' + event_id,
                 'namespace': 'oscar',
             },
             'spec': {
@@ -115,8 +120,10 @@ class KubernetesClient:
 
         return job
 
-    def launch_job(self, function_name, event):
-        definition = self._create_job_definition(function_name, event)
+    def launch_job(self, event):
+        definition = self._create_job_definition(event)
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
 
         resp = self._create_request('POST', url, body=definition)
+        if resp:
+            print('Job {0} created successfully').format()
