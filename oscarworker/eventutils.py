@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import json
+import uuid
 import oscarworker.utils as utils
 
 def is_cloudevent(event):
