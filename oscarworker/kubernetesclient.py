@@ -45,13 +45,13 @@ class KubernetesClient:
     def _gen_auth_header(self):
         return {'Authorization': 'Bearer ' + self.token}
 
-    def _create_request(self, method, url, headers=None, body=None):
+    def _create_request(self, method, url, headers=None, json=None):
         try:
             if headers is None:
                 headers = {}
             headers.update(self._gen_auth_header())
 
-            resp = requests.request(method, url, verify=False, headers=headers, data=body)
+            resp = requests.request(method, url, verify=False, headers=headers, json=json)
             if resp.status_code == 200:
                 return resp.json()
             else:
@@ -70,7 +70,7 @@ class KubernetesClient:
         return deployment_info
 
     @utils.lazy_property
-    def _get_kubernetes_version(self):
+    def _kubernetes_version(self):
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.nodes_info_path)
         nodes_info = self._create_request('GET', url)
         if not nodes_info:
@@ -120,7 +120,7 @@ class KubernetesClient:
         job['spec']['template']['spec']['containers'][0]['env'].append(event_variable)
 
         # Add ttlSecondsAfterFinished option if Kubernetes version is >= 1.12
-        if self._get_kubernetes_version() >= version.parse('v1.12'):
+        if self._kubernetes_version >= version.parse('v1.12'):
             job['spec']['ttlSecondsAfterFinished'] = self.job_ttl_seconds_after_finished
 
         return job
@@ -129,6 +129,6 @@ class KubernetesClient:
         definition = self._create_job_definition(event)
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
 
-        resp = self._create_request('POST', url, body=definition)
+        resp = self._create_request('POST', url, json=definition)
         if resp:
             print('Job {0} created successfully').format(definition['metadata']['name'])
