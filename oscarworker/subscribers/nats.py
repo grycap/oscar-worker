@@ -12,3 +12,53 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import asyncio
+import os
+from nats.aio.client import Client as NATS
+from stan.aio.client import Client as STAN
+import oscarworker.utils as utils
+from oscarworker.subscribers.subscriber import Subscriber
+
+class Nats(Subscriber):
+
+    cluster_id = 'faas-cluster'
+    subject = 'faas-request'
+    queue_group = 'faas'
+
+    def __init__(self):
+        self.client_id = 'faas-worker-{0}'.format(os.uname().nodename)
+
+        self.nats_address = utils.get_environment_variable('NATS_ADDRESS')
+        if not self.nats_address:
+            self.nats_address = 'nats'
+
+        self.nats_port = utils.get_environment_variable('NATS_PORT')
+        if not self.nats_port:
+            self.nats_port = '4222'
+
+
+    async def run(self, loop, handler):
+        # Use borrowed connection for NATS then mount NATS Streaming
+        # client on top.
+        nc = NATS()
+        await nc.connect('{0}:{1}'.format(self.nats_address, self.nats_port), loop=loop)
+
+        # Start session with NATS Streaming cluster.
+        sc = STAN()
+        await sc.connect(self.cluster_id, self.client_id, nats=nc)
+
+        async def cb(msg):
+            print('EVENT RECEIVED -----------------------------------------')
+            print(msg.data)
+            print('--------------------------------------------------------')
+            handler(msg.data)
+
+        await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)
+
+        # TODO: Handle SIGINT
+        #await sc.close()
+        #await nc.close()
+
+
+
