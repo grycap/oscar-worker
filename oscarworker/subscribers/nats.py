@@ -20,7 +20,7 @@ from stan.aio.client import Client as STAN
 import oscarworker.utils as utils
 from oscarworker.subscribers.subscriber import Subscriber
 
-class Nats(Subscriber):
+class NatsSubscriber(Subscriber):
 
     cluster_id = 'faas-cluster'
     subject = 'faas-request'

@@ -12,3 +12,36 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import asyncio
+import oscarworker.utils as utils
+from oscarworker.kubernetesclient import KubernetesClient
+from oscarworker.subscribers.nats import NatsSubscriber
+
+def main():
+    print('Starting OSCAR Worker...')
+
+    token = utils.get_environment_variable('KUBE_TOKEN')
+    kube_client = KubernetesClient(token=token)
+    loop = asyncio.get_event_loop()
+
+    # Subscribers list (Currently only nats)
+    subscribers = []
+    nats_client = NatsSubscriber()
+    subscribers.append(nats_client)
+    
+    # Asyncio tasks list
+    tasks = []
+    for subscriber in subscribers:
+        #task = asyncio.create_task(subscriber.run(loop, kube_client.launch_job)) # Only works in Python 3.7+
+        task = asyncio.ensure_future(subscriber.run(loop, kube_client.launch_job))
+        tasks.append(task)
+
+    # Run tasks
+    loop.run_until_complete(asyncio.wait(tasks))
+
+    loop.close()
+
+
+if __name__ == "__main__":
+    main()
