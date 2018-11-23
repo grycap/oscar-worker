@@ -31,12 +31,11 @@ class NatsSubscriber(Subscriber):
 
         self.nats_address = utils.get_environment_variable('NATS_ADDRESS')
         if not self.nats_address:
-            self.nats_address = 'nats'
+            self.nats_address = 'nats.openfaas'
 
         self.nats_port = utils.get_environment_variable('NATS_PORT')
         if not self.nats_port:
             self.nats_port = '4222'
-
 
     async def run(self, loop, handler):
         # Use borrowed connection for NATS then mount NATS Streaming
@@ -48,17 +47,18 @@ class NatsSubscriber(Subscriber):
         sc = STAN()
         await sc.connect(self.cluster_id, self.client_id, nats=nc)
 
+        # Send msg.data to handler (KubernetesClient.launch_job())
         async def cb(msg):
             print('EVENT RECEIVED -----------------------------------------')
             print(msg.data)
             print('--------------------------------------------------------')
             handler(msg.data)
 
-        await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)
-
-        # TODO: Handle SIGINT
-        #await sc.close()
-        #await nc.close()
+        try:
+            await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)
+        except asyncio.CancelledError:
+            await sc.close()
+            await nc.close()
 
 
 

@@ -78,7 +78,6 @@ class KubernetesClient:
             return None
         return version.parse(nodes_info['items'][0]['status']['nodeInfo']['kubeletVersion'])
 
-
     def _create_job_definition(self, event):
         function_name = eventutils.get_function_name(event)
         event_id = eventutils.get_event_id(event)

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import asyncio
+import signal
 import oscarworker.utils as utils
 from oscarworker.kubernetesclient import KubernetesClient
 from oscarworker.subscribers.nats import NatsSubscriber
@@ -24,6 +25,10 @@ def main():
     token = utils.get_environment_variable('KUBE_TOKEN')
     kube_client = KubernetesClient(token=token)
     loop = asyncio.get_event_loop()
+
+    # Set signal handler
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, exit)
 
     # Subscribers list (Currently only nats)
     subscribers = []
@@ -39,8 +44,13 @@ def main():
 
     # Run tasks
     loop.run_until_complete(asyncio.wait(tasks))
+    loop.run_forever()
 
-    loop.close()
+# Send asyncio.CancelledError exception to all tasks
+def exit():
+    for task in asyncio.Task.all_tasks():
+        task.cancel()
+    asyncio.get_running_loop().close()
 
 
 if __name__ == "__main__":
