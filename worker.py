@@ -15,12 +15,17 @@
 
 import asyncio
 import signal
+import logging
 import oscarworker.utils as utils
 from oscarworker.kubernetesclient import KubernetesClient
 from oscarworker.subscribers.nats import NatsSubscriber
 
+loglevel = logging.INFO
+FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+logging.basicConfig(format=FORMAT)
+
 def main():
-    print('Starting OSCAR Worker...')
+    logging.info('Starting OSCAR Worker...')
 
     token = utils.get_environment_variable('KUBE_TOKEN')
     kube_client = KubernetesClient(token=token)
@@ -46,11 +51,13 @@ def main():
     loop.run_until_complete(asyncio.wait(tasks))
     loop.run_forever()
 
-# Send asyncio.CancelledError exception to all tasks
+# Send asyncio.CancelledError exception to all tasks and close loop
 def exit():
+    logging.info('Closing OSCAR Worker...')
     for task in asyncio.Task.all_tasks():
         task.cancel()
     asyncio.get_running_loop().close()
+    logging.info('Closed.')
 
 
 if __name__ == "__main__":

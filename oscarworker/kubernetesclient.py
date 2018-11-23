@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from packaging import version
+import logging
 import requests
 import oscarworker.utils as utils
 import oscarworker.eventutils as eventutils
@@ -55,17 +56,17 @@ class KubernetesClient:
             if resp.status_code == 200:
                 return resp.json()
             else:
-                print('Error contacting Kubernetes API: {0} - {1}'.format(resp.status_code, resp.text))
+                logging.error('Error contacting Kubernetes API: {0} - {1}'.format(resp.status_code, resp.text))
                 return None
         except Exception as ex:
-            print('Error contacting Kubernetes API: {0}'.format(str(ex)))
+            logging.error('Error contacting Kubernetes API: {0}'.format(str(ex)))
             return None
 
     def _get_deployment_info(self, function_name):
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.deployment_list_path)
         deployment_info = self._create_request('GET', url)
         if not deployment_info:
-            print('Error getting deployment info')
+            logging.error('Error getting deployment info')
             return None
         return deployment_info
 
@@ -74,7 +75,7 @@ class KubernetesClient:
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.nodes_info_path)
         nodes_info = self._create_request('GET', url)
         if not nodes_info:
-            print('Error getting nodes info')
+            logging.error('Error getting nodes info')
             return None
         return version.parse(nodes_info['items'][0]['status']['nodeInfo']['kubeletVersion'])
 
@@ -130,4 +131,4 @@ class KubernetesClient:
 
         resp = self._create_request('POST', url, json=definition)
         if resp:
-            print('Job {0} created successfully').format(definition['metadata']['name'])
+            logging.info('Job {0} created successfully').format(definition['metadata']['name'])

@@ -15,6 +15,7 @@
 
 import asyncio
 import os
+import logging
 from nats.aio.client import Client as NATS
 from stan.aio.client import Client as STAN
 import oscarworker.utils as utils
@@ -40,22 +41,25 @@ class NatsSubscriber(Subscriber):
     async def run(self, loop, handler):
         # Use borrowed connection for NATS then mount NATS Streaming
         # client on top.
+        logging.info('Connecting to nats://{0}:{1}...'.format(self.nats_address, self.nats_port))
         nc = NATS()
         await nc.connect('{0}:{1}'.format(self.nats_address, self.nats_port), loop=loop)
 
         # Start session with NATS Streaming cluster.
+        logging.info('Establishing connection to cluster: {0} with clientID: {1}...'.format(self.cluster_id, self.client_id))
         sc = STAN()
         await sc.connect(self.cluster_id, self.client_id, nats=nc)
 
         # Send msg.data to handler (KubernetesClient.launch_job())
         async def cb(msg):
-            print('EVENT RECEIVED -----------------------------------------')
-            print(msg.data)
-            print('--------------------------------------------------------')
+            logging.info('EVENT RECEIVED -----------------------------------------')
+            logging.info(msg.data)
+            logging.info('--------------------------------------------------------')
             handler(msg.data)
 
         try:
             await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)
+            logging.info('Listening on "{0}", queue "{1}"'.format(self.subject, self.queue_group))
         except asyncio.CancelledError:
             await sc.close()
             await nc.close()
