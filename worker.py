@@ -22,7 +22,7 @@ from oscarworker.subscribers.nats import NatsSubscriber
 
 loglevel = logging.INFO
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(format=FORMAT)
+logging.basicConfig(format=FORMAT, level=loglevel)
 
 def main():
     logging.info('Starting OSCAR Worker...')
