@@ -121,7 +121,7 @@ class KubernetesClient:
         # Add event as an environment variable
         event_variable = {
             'name': 'OSCAR_EVENT',
-            'value': event
+            'value': json.dumps(event)
         }
         job['spec']['template']['spec']['containers'][0]['env'].append(event_variable)
 
