@@ -107,8 +107,7 @@ class KubernetesClient:
                             {
                                 'name': container_info['name'],
                                 'image': container_info['image'],
-                                'command': ['python3'],
-                                'args': ['supervisor.py'],
+                                'command': ['supervisor'],
                                 'env': container_info['env'],
                                 'resources': container_info['resources']
                             }
