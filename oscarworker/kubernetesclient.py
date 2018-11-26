@@ -137,7 +137,9 @@ class KubernetesClient:
         logging.info('--------------------------------------------------------')
 
         data = json.loads(msg_data.decode('utf-8'))
-        event = data['Body']
+        body = data['Body']
+        # Decode data body (OpenFaaS Gateway encodes it to base64)
+        event = utils.base64_to_utf8_string(body)
 
         definition = self._create_job_definition(event, function_name=data['Function'])
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
