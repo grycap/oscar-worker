@@ -15,6 +15,7 @@
 
 from packaging import version
 import logging
+import json
 import requests
 import oscarworker.utils as utils
 import oscarworker.eventutils as eventutils
@@ -79,9 +80,12 @@ class KubernetesClient:
             return None
         return version.parse(nodes_info['items'][0]['status']['nodeInfo']['kubeletVersion'])
 
-    def _create_job_definition(self, event):
-        function_name = eventutils.get_function_name(event)
+    def _create_job_definition(self, event, function_name=None):
         event_id = eventutils.get_event_id(event)
+
+        if not function_name:
+            function_name = eventutils.get_function_name(event)
+
         deployment_info = self._get_deployment_info(function_name)
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
@@ -125,8 +129,15 @@ class KubernetesClient:
 
         return job
 
-    def launch_job(self, event):
-        definition = self._create_job_definition(event)
+    def launch_job(self, msg_data):
+        logging.info('EVENT RECEIVED -----------------------------------------')
+        logging.info(msg_data)
+        logging.info('--------------------------------------------------------')
+
+        data = json.loads(msg_data.decode('utf-8'))
+        event = data['Body']
+
+        definition = self._create_job_definition(event, function_name=data['Function'])
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
 
         resp = self._create_request('POST', url, json=definition)

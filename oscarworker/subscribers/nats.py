@@ -52,9 +52,6 @@ class NatsSubscriber(Subscriber):
 
         # Send msg.data to handler (KubernetesClient.launch_job())
         async def cb(msg):
-            logging.info('EVENT RECEIVED -----------------------------------------')
-            logging.info(msg.data)
-            logging.info('--------------------------------------------------------')
             handler(msg.data)
 
         try:
