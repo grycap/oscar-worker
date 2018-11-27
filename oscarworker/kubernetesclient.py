@@ -131,17 +131,12 @@ class KubernetesClient:
 
         return job
 
-    def launch_job(self, msg_data):
+    def launch_job(self, event, function_name=None):
         logging.info('EVENT RECEIVED -----------------------------------------')
-        logging.info(msg_data)
+        logging.info(event)
         logging.info('--------------------------------------------------------')
 
-        data = json.loads(msg_data.decode('utf-8'))
-        body = data['Body']
-        # Decode data body (OpenFaaS Gateway encodes it to base64)
-        event = utils.base64_to_utf8_string(body)
-
-        definition = self._create_job_definition(event, function_name=data['Function'])
+        definition = self._create_job_definition(event, function_name=function_name)
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
 
         resp = self._create_request('POST', url, json=definition)

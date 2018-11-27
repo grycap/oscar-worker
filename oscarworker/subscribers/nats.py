@@ -16,6 +16,7 @@
 import asyncio
 import os
 import logging
+import json
 from nats.aio.client import Client as NATS
 from stan.aio.client import Client as STAN
 import oscarworker.utils as utils
@@ -52,7 +53,14 @@ class NatsSubscriber(Subscriber):
 
         # Send msg.data to handler (KubernetesClient.launch_job())
         async def cb(msg):
-            handler(msg.data)
+            data = json.loads(msg.data.decode('utf-8'))
+            function_name = data['Function']
+
+            # Decode data body (OpenFaaS Gateway encodes it to base64)
+            decoded_body = utils.base64_to_utf8_string(data['Body'])
+            event = json.loads(decoded_body)
+
+            handler(event, function_name=function_name)
 
         try:
             await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)
