@@ -16,6 +16,7 @@
 from packaging import version
 import logging
 import json
+import os.path
 import requests
 import oscarworker.utils as utils
 import oscarworker.eventutils as eventutils
@@ -26,11 +27,15 @@ class KubernetesClient:
     create_job_path = '/apis/batch/v1/namespaces/oscar/jobs'
     nodes_info_path = '/api/v1/nodes'
 
-    def __init__(self, token=None):
-        if token:
-            self.token = token
-        else:
+    def __init__(self):
+        self.token = utils.get_environment_variable('KUBE_TOKEN')
+        if not self.token:
             self.token = utils.read_file('/var/run/secrets/kubernetes.io/serviceaccount/token')
+
+        if os.path.isfile('/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'):
+            self._cert_verify = '/var/run/secrets/kubernetes.io/serviceaccount/ca.crt'
+        else:
+            self._cert_verify = False
 
         self.kubernetes_service_host = utils.get_environment_variable('KUBERNETES_SERVICE_HOST')
         if not self.kubernetes_service_host:
@@ -53,8 +58,8 @@ class KubernetesClient:
                 headers = {}
             headers.update(self._gen_auth_header())
 
-            resp = requests.request(method, url, verify=False, headers=headers, json=json)
-            if resp.status_code == 200:
+            resp = requests.request(method, url, verify=self._cert_verify, headers=headers, json=json)
+            if resp.status_code in [200, 201, 202]:
                 return resp.json()
             else:
                 logging.error('Error contacting Kubernetes API: {0} - {1}'.format(resp.status_code, resp.text))
@@ -132,13 +137,11 @@ class KubernetesClient:
         return job
 
     def launch_job(self, event, function_name=None):
-        logging.info('EVENT RECEIVED -----------------------------------------')
-        logging.info(event)
-        logging.info('--------------------------------------------------------')
+        logging.info('EVENT RECEIVED: {0}'.format(event))
 
         definition = self._create_job_definition(event, function_name=function_name)
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
 
         resp = self._create_request('POST', url, json=definition)
         if resp:
-            logging.info('Job {0} created successfully').format(definition['metadata']['name'])
+            logging.info('Job {0} created successfully'.format(definition['metadata']['name']))

@@ -27,8 +27,7 @@ logging.basicConfig(format=FORMAT, level=loglevel)
 def main():
     logging.info('Starting OSCAR Worker...')
 
-    token = utils.get_environment_variable('KUBE_TOKEN')
-    kube_client = KubernetesClient(token=token)
+    kube_client = KubernetesClient()
     loop = asyncio.get_event_loop()
 
     # Set signal handler
