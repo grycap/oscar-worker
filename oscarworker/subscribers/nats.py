@@ -65,9 +65,10 @@ class NatsSubscriber(Subscriber):
         try:
             await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)
             logging.info('Listening on "{0}", queue "{1}"'.format(self.subject, self.queue_group))
-        except asyncio.CancelledError:
+        except asyncio.CancelledError as e:
             await sc.close()
             await nc.close()
+            raise e
 
 
 

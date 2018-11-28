@@ -32,7 +32,7 @@ def main():
 
     # Set signal handler
     for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, exit)
+        loop.add_signal_handler(sig, ask_exit)
 
     # Subscribers list (Currently only nats)
     subscribers = []
@@ -50,13 +50,21 @@ def main():
     loop.run_until_complete(asyncio.wait(tasks))
     loop.run_forever()
 
-# Send asyncio.CancelledError exception to all tasks and close loop
+    loop.close()
+    logging.info('Closed.')
+
+# Stop the loop after all tasks have been finished
+@asyncio.coroutine
 def exit():
+    loop = asyncio.get_event_loop()
+    loop.stop()
+
+# Send asyncio.CancelledError exception to all tasks and close loop
+def ask_exit():
     logging.info('Closing OSCAR Worker...')
     for task in asyncio.Task.all_tasks():
         task.cancel()
-    asyncio.get_running_loop().close()
-    logging.info('Closed.')
+    asyncio.ensure_future(exit())
 
 
 if __name__ == "__main__":
