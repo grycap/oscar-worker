@@ -15,11 +15,10 @@
 
 from packaging import version
 import logging
-import json
+import uuid
 import os.path
 import requests
 import oscarworker.utils as utils
-import oscarworker.eventutils as eventutils
 
 class KubernetesClient:
 
@@ -88,12 +87,7 @@ class KubernetesClient:
             return None
         return version.parse(nodes_info['items'][0]['status']['nodeInfo']['kubeletVersion'])
 
-    def _create_job_definition(self, event, function_name=None):
-        event_id = eventutils.get_event_id(event)
-
-        if not function_name:
-            function_name = eventutils.get_function_name(event)
-
+    def _create_job_definition(self, event, function_name):
         deployment_info = self._get_deployment_info(function_name)
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
@@ -102,7 +96,7 @@ class KubernetesClient:
             'apiVersion': 'batch/v1',
             'kind': 'Job',
             'metadata': {
-                'name': function_name + '-' + event_id,
+                'name': '{0}-{1}'.format(function_name, str(uuid.uuid4())),
                 'namespace': 'oscar',
             },
             'spec': {
@@ -112,9 +106,10 @@ class KubernetesClient:
                             {
                                 'name': container_info['name'],
                                 'image': container_info['image'],
-                                'command': ['supervisor'],
-                                'env': container_info['env'],
-                                'resources': container_info['resources']
+                                'command': ['/bin/sh'],
+                                'args': ['-c', 'echo $EVENT | $fprocess'],
+                                'env': container_info['env'] if 'env' in container_info else [],
+                                'resources': container_info['resources'] if 'resources' in container_info else {}
                             }
                         ],
                         'restartPolicy': 'Never'
@@ -125,8 +120,8 @@ class KubernetesClient:
 
         # Add event as an environment variable
         event_variable = {
-            'name': 'OSCAR_EVENT',
-            'value': json.dumps(event)
+            'name': 'EVENT',
+            'value': str(event)
         }
         job['spec']['template']['spec']['containers'][0]['env'].append(event_variable)
 
@@ -136,10 +131,10 @@ class KubernetesClient:
 
         return job
 
-    def launch_job(self, event, function_name=None):
+    def launch_job(self, event, function_name):
         logging.info('EVENT RECEIVED: {0}'.format(event))
 
-        definition = self._create_job_definition(event, function_name=function_name)
+        definition = self._create_job_definition(event, function_name)
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
 
         resp = self._create_request('POST', url, json=definition)

@@ -18,5 +18,5 @@ import abc
 class Subscriber(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
-    def run(self, loop, cb):
+    def run(self, loop, handler):
         pass

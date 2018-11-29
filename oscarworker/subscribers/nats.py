@@ -58,9 +58,8 @@ class NatsSubscriber(Subscriber):
 
             # Decode data body (OpenFaaS Gateway encodes it to base64)
             decoded_body = utils.base64_to_utf8_string(data['Body'])
-            event = json.loads(decoded_body)
 
-            handler(event, function_name=function_name)
+            handler(decoded_body, function_name)
 
         try:
             await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)
