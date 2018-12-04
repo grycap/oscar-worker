@@ -97,7 +97,7 @@ class KubernetesClient:
             'kind': 'Job',
             'metadata': {
                 'name': '{0}-{1}'.format(function_name, str(uuid.uuid4())),
-                'namespace': 'oscar',
+                'namespace': 'oscar-fn',
             },
             'spec': {
                 'template': {
