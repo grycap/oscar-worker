@@ -23,7 +23,7 @@ import oscarworker.utils as utils
 class KubernetesClient:
 
     deployment_list_path = '/apis/apps/v1/namespaces/openfaas-fn/deployments/'
-    create_job_path = '/apis/batch/v1/namespaces/oscar/jobs'
+    create_job_path = '/apis/batch/v1/namespaces/oscar-fn/jobs'
     nodes_info_path = '/api/v1/nodes'
 
     def __init__(self):
