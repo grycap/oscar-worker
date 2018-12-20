@@ -15,17 +15,20 @@ spec:
       - name:  oscar-queue-worker
         image: grycap/oscar-worker:latest
         imagePullPolicy: Always
-        # env:
-        # - name: max_inflight      # Max number of items in-flight
-        #   value: "1"
-        # - name: ack_wait          # Max duration of any async task / request
-        #   value: "30s"
-        # - name: faas_function_suffix
-        #   value: ".openfaas-fn.svc.cluster.local."  # absolute DNS will suppress search domains
-        # - name: basic_auth
-        #   value: "false"
-        # - name: secret_mount_path
-        #   value: "/etc/openfaas"
+        env:
+        # Token to access the k8s API server (if not set reads the content of '/var/run/secrets/kubernetes.io/serviceaccount/token')  
+        # - name: KUBE_TOKEN
+        #   value: "xxx"
+        - name: KUBERNETES_SERVICE_HOST
+          value: "kubernetes.default"
+        - name: KUBERNETES_SERVICE_PORT
+          value: "443"
+        - name: NATS_ADDRESS
+          value: "nats.openfaas"
+        - name: NATS_PORT
+          value: "4222"
+        - name: JOB_TTL_SECONDS_AFTER_FINISHED
+          value: 60
         # Adjust resources to suit needs of deployment
         resources:
           requests:
