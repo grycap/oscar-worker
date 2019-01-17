@@ -16,7 +16,6 @@
 import asyncio
 import signal
 import logging
-import oscarworker.utils as utils
 from oscarworker.kubernetesclient import KubernetesClient
 from oscarworker.subscribers.nats import NatsSubscriber
 
