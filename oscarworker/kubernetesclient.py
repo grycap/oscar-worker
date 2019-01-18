@@ -91,6 +91,21 @@ class KubernetesClient:
         deployment_info = self._get_deployment_info(function_name)
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
+        # Set default resources if they are not specified in the deployment 
+        if 'resources' in container_info and bool(container_info['resources']):
+            resources = container_info['resources']
+        else:
+            resources = {
+                'requests': {
+                    'memory': '256Mi',
+                    'cpu': '250m'
+                },
+                'limits': {
+                    'memory': '256Mi',
+                    'cpu': '250m'
+                }
+            }
+
         # Create JSON based on function deployment
         job = {
             'apiVersion': 'batch/v1',
@@ -109,7 +124,7 @@ class KubernetesClient:
                                 'command': ['/bin/sh'],
                                 'args': ['-c', 'echo $EVENT | $fprocess'],
                                 'env': container_info['env'] if 'env' in container_info else [],
-                                'resources': container_info['resources'] if 'resources' in container_info else {}
+                                'resources': resources
                             }
                         ],
                         'restartPolicy': 'Never'
