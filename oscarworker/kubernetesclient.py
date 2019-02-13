@@ -122,7 +122,7 @@ class KubernetesClient:
                                 'name': container_info['name'],
                                 'image': container_info['image'],
                                 'command': ['/bin/sh'],
-                                'args': ['-c', 'echo $EVENT | xargs -0 $fprocess'],
+                                'args': ['-c', 'echo $EVENT | $fprocess'],
                                 'env': container_info['env'] if 'env' in container_info else [],
                                 'resources': resources
                             }
