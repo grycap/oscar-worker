@@ -48,6 +48,10 @@ class KubernetesClient:
         if not self.job_ttl_seconds_after_finished:
             self.job_ttl_seconds_after_finished = 60
 
+        self.job_backoff_limit = utils.get_environment_variable('JOB_BACKOFF_LIMIT')
+        if not self.job_backoff_limit:
+            self.job_backoff_limit = 6
+
     def _gen_auth_header(self):
         return {'Authorization': 'Bearer ' + self.token}
 
@@ -115,6 +119,7 @@ class KubernetesClient:
                 'namespace': 'oscar-fn',
             },
             'spec': {
+                'backoffLimit': self.job_backoff_limit,
                 'template': {
                     'spec': {
                         'containers': [
