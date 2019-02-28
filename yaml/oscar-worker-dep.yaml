@@ -29,6 +29,8 @@ spec:
           value: "4222"
         - name: JOB_TTL_SECONDS_AFTER_FINISHED
           value: 60
+        - name: JOB_BACKOFF_LIMIT
+          value: 3
         # Adjust resources to suit needs of deployment
         resources:
           requests:

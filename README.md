@@ -28,6 +28,8 @@ You can configure the worker through environment variables. To modify the defaul
           value: "4222"
         - name: JOB_TTL_SECONDS_AFTER_FINISHED
           value: 60
+        - name: JOB_BACKOFF_LIMIT
+          value: 3
 ...
 ```
 
