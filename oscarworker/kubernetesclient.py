@@ -119,7 +119,7 @@ class KubernetesClient:
                 'namespace': 'oscar-fn',
             },
             'spec': {
-                'backoffLimit': self.job_backoff_limit,
+                'backoffLimit': int(self.job_backoff_limit),
                 'template': {
                     'spec': {
                         'containers': [
@@ -147,7 +147,7 @@ class KubernetesClient:
 
         # Add ttlSecondsAfterFinished option if Kubernetes version is >= 1.12
         if self._kubernetes_version >= version.parse('v1.12'):
-            job['spec']['ttlSecondsAfterFinished'] = self.job_ttl_seconds_after_finished
+            job['spec']['ttlSecondsAfterFinished'] = int(self.job_ttl_seconds_after_finished)
 
         return job
 
