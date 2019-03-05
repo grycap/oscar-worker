@@ -132,7 +132,7 @@ class KubernetesClient:
                                 'resources': resources
                             }
                         ],
-                        'restartPolicy': 'Never'
+                        'restartPolicy': 'OnFailure'
                     }
                 }
             }
