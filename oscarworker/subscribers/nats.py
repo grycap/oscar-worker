@@ -54,12 +54,7 @@ class NatsSubscriber(Subscriber):
         # Send msg.data to handler (KubernetesClient.launch_job())
         async def cb(msg):
             data = json.loads(msg.data.decode('utf-8'))
-            function_name = data['Function']
-
-            # Decode data body (OpenFaaS Gateway encodes it to base64)
-            decoded_body = utils.base64_to_utf8_string(data['Body'])
-
-            handler(decoded_body, function_name)
+            handler(data)
 
         try:
             await sc.subscribe(self.subject, queue=self.queue_group, cb=cb)

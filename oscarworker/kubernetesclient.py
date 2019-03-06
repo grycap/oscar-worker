@@ -151,12 +151,31 @@ class KubernetesClient:
 
         return job
 
-    def launch_job(self, event, function_name):
+    def _create_headers_env_vars(self, data):
+        # Test
+        logging.info('-----------------------------------------------')
+        logging.info('QueryString: {}'.format(data['QueryString']))
+        logging.info('Path: {}'.format(data['Path']))
+        logging.info('Header: {}'.format(data['Header']))
+        logging.info('Host: {}'.format(data['Host']))
+        logging.info('-----------------------------------------------')
+
+
+    def launch_job(self, data):
+        # Test
+        logging.info('DATA RECEIVED: {0}'.format(data))
+
+        function_name = data['Function']
+        # Decode data body (OpenFaaS Gateway encodes it to base64)
+        event = utils.base64_to_utf8_string(data['Body'])
+
         logging.info('EVENT RECEIVED: {0}'.format(event))
+
+        # Test (This method must return a dict with all headers as container envVars)
+        self._create_headers_env_vars(data)
 
         definition = self._create_job_definition(event, function_name)
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
-
         resp = self._create_request('POST', url, json=definition)
         if resp:
             logging.info('Job {0} created successfully'.format(definition['metadata']['name']))
