@@ -91,7 +91,7 @@ class KubernetesClient:
             return None
         return version.parse(nodes_info['items'][0]['status']['nodeInfo']['kubeletVersion'])
 
-    def _create_job_definition(self, event, function_name):
+    def _create_job_definition(self, function_name, event, envs):
         deployment_info = self._get_deployment_info(function_name)
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
@@ -145,36 +145,41 @@ class KubernetesClient:
         }
         job['spec']['template']['spec']['containers'][0]['env'].append(event_variable)
 
+        # Add additional environment variables
+        job['spec']['template']['spec']['containers'][0]['env'].extend(envs)
+
         # Add ttlSecondsAfterFinished option if Kubernetes version is >= 1.12
         if self._kubernetes_version >= version.parse('v1.12'):
             job['spec']['ttlSecondsAfterFinished'] = int(self.job_ttl_seconds_after_finished)
 
         return job
 
-    def _create_headers_env_vars(self, data):
-        # Test
-        logging.info('-----------------------------------------------')
-        logging.info('QueryString: {}'.format(data['QueryString']))
-        logging.info('Path: {}'.format(data['Path']))
-        logging.info('Header: {}'.format(data['Header']))
-        logging.info('Host: {}'.format(data['Host']))
-        logging.info('-----------------------------------------------')
-
+    def _create_additional_envs(self, data):
+        envs = []
+        if utils.is_value_in_dict(data, 'Host'):
+            envs.append({'name': 'Http_Host', 'value': data['Host']})
+        if utils.is_value_in_dict(data, 'Path'):
+            envs.append({'name': 'Http_Path', 'value': data['Path']})
+        if utils.is_value_in_dict(data, 'QueryString'):
+            envs.append({'name': 'Http_Query', 'value': data['QueryString']})
+        if utils.is_value_in_dict(data, 'Header'):
+            headers = data['Header']
+            for key, value in headers.items():
+                name = 'Http_{0}'.format(key.replace('-', '_'))
+                envs.append({'name': name, 'value': value[0]})
+        return envs
 
     def launch_job(self, data):
-        # Test
-        logging.info('DATA RECEIVED: {0}'.format(data))
-
         function_name = data['Function']
         # Decode data body (OpenFaaS Gateway encodes it to base64)
         event = utils.base64_to_utf8_string(data['Body'])
 
         logging.info('EVENT RECEIVED: {0}'.format(event))
 
-        # Test (This method must return a dict with all headers as container envVars)
-        self._create_headers_env_vars(data)
+        # Create additional environment variables
+        envs = self._create_additional_envs(data)
 
-        definition = self._create_job_definition(event, function_name)
+        definition = self._create_job_definition(function_name, event, envs)
         url = 'https://{0}:{1}{2}'.format(self.kubernetes_service_host, self.kubernetes_service_port, self.create_job_path)
         resp = self._create_request('POST', url, json=definition)
         if resp:
