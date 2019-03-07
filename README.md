@@ -1,6 +1,6 @@
 # OSCAR Worker
 
-[![Docker Build Status](https://img.shields.io/docker/build/grycap/oscar-worker.svg)](https://hub.docker.com/r/grycap/oscar-worker/) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![Docker Build Status](https://img.shields.io/docker/cloud/build/grycap/oscar-worker.svg)](https://hub.docker.com/r/grycap/oscar-worker/) [![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 OSCAR Worker is the default queue worker for [OpenFaaS](https://github.com/openfaas/faas) in the [OSCAR framework](https://github.com/grycap/oscar). It enables launching long-running functions as Kubernetes Jobs when `/async-function/` path is used to make requests.
 
