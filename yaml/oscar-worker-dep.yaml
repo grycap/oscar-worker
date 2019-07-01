@@ -1,14 +1,19 @@
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: oscar-worker
   namespace: oscar
+  labels:
+    app: oscar-worker
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: oscar-worker
   template:
     metadata:
       labels:
-        app: queue-worker
+        app: oscar-worker
     spec:
       serviceAccountName: oscar-worker-controller
       containers:
@@ -28,9 +33,9 @@ spec:
         - name: NATS_PORT
           value: "4222"
         - name: JOB_TTL_SECONDS_AFTER_FINISHED
-          value: 60
+          value: "60"
         - name: JOB_BACKOFF_LIMIT
-          value: 3
+          value: "3"
         # Adjust resources to suit needs of deployment
         resources:
           requests:
