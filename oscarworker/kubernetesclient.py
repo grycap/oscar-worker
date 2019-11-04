@@ -95,7 +95,13 @@ class KubernetesClient:
         deployment_info = self._get_deployment_info(function_name)
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
-        # Set default resources if they are not specified in the deployment 
+        # Volumes
+        if 'volumes' in deployment_info:
+            volumes = deployment_info['volumes']
+        else:
+            volumes = []
+
+        # Set default resources if they are not specified in the deployment
         if 'resources' in container_info and bool(container_info['resources']):
             resources = container_info['resources']
         else:
@@ -129,9 +135,11 @@ class KubernetesClient:
                                 'command': ['/bin/sh'],
                                 'args': ['-c', 'echo $EVENT | $fprocess'],
                                 'env': container_info['env'] if 'env' in container_info else [],
-                                'resources': resources
+                                'resources': resources,
+                                'volumeMounts': container_info['volumeMounts'] if 'volumeMounts' in container_info else []
                             }
                         ],
+                        'volumes': volumes,
                         'restartPolicy': 'OnFailure'
                     }
                 }
