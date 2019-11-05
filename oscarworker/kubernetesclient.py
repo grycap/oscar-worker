@@ -96,8 +96,9 @@ class KubernetesClient:
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
         # Volumes
-        if 'volumes' in deployment_info:
-            volumes = deployment_info['volumes']
+        pod_spec = deployment_info['spec']['template']['spec']
+        if 'volumes' in pod_spec:
+            volumes = pod_spec['volumes']
         else:
             volumes = []
 
