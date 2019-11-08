@@ -20,6 +20,7 @@ import os.path
 import requests
 import oscarworker.utils as utils
 
+
 class KubernetesClient:
 
     deployment_list_path = '/apis/apps/v1/namespaces/openfaas-fn/deployments/'
@@ -72,8 +73,8 @@ class KubernetesClient:
             return None
 
     def _get_deployment_info(self, function_name):
-        url = 'https://{0}:{1}{2}{3}'.format(self.kubernetes_service_host, 
-                                             self.kubernetes_service_port, 
+        url = 'https://{0}:{1}{2}{3}'.format(self.kubernetes_service_host,
+                                             self.kubernetes_service_port,
                                              self.deployment_list_path,
                                              function_name)
         deployment_info = self._create_request('GET', url)
@@ -95,7 +96,14 @@ class KubernetesClient:
         deployment_info = self._get_deployment_info(function_name)
         container_info = deployment_info['spec']['template']['spec']['containers'][0]
 
-        # Set default resources if they are not specified in the deployment 
+        # Volumes
+        pod_spec = deployment_info['spec']['template']['spec']
+        if 'volumes' in pod_spec:
+            volumes = pod_spec['volumes']
+        else:
+            volumes = []
+
+        # Set default resources if they are not specified in the deployment
         if 'resources' in container_info and bool(container_info['resources']):
             resources = container_info['resources']
         else:
@@ -129,9 +137,11 @@ class KubernetesClient:
                                 'command': ['/bin/sh'],
                                 'args': ['-c', 'echo $EVENT | $fprocess'],
                                 'env': container_info['env'] if 'env' in container_info else [],
-                                'resources': resources
+                                'resources': resources,
+                                'volumeMounts': container_info['volumeMounts'] if 'volumeMounts' in container_info else []
                             }
                         ],
+                        'volumes': volumes,
                         'restartPolicy': 'OnFailure'
                     }
                 }

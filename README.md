@@ -49,6 +49,16 @@ kubectl apply -f yaml/oscar-worker-rbac.yaml
 kubectl apply -f yaml/oscar-worker-dep.yaml
 ```
 
+## Secrets
+
+If your OpenFaaS function have [secrets](https://docs.openfaas.com/reference/secrets/) defined, you must duplicate them to the `oscar-fn` namespace for granting access to jobs:
+
+```bash
+kubectl get secret <SECRET_NAME> -n openfaas-fn -o yaml \
+| sed s/"namespace: openfaas-fn"/"namespace: oscar-fn"/\
+| kubectl apply -n oscar-fn -f -
+```
+
 ## Logs
 
 If you want to inspect worker's logs run:
