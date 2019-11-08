@@ -20,6 +20,7 @@ import os.path
 import requests
 import oscarworker.utils as utils
 
+
 class KubernetesClient:
 
     deployment_list_path = '/apis/apps/v1/namespaces/openfaas-fn/deployments/'
@@ -72,8 +73,8 @@ class KubernetesClient:
             return None
 
     def _get_deployment_info(self, function_name):
-        url = 'https://{0}:{1}{2}{3}'.format(self.kubernetes_service_host, 
-                                             self.kubernetes_service_port, 
+        url = 'https://{0}:{1}{2}{3}'.format(self.kubernetes_service_host,
+                                             self.kubernetes_service_port,
                                              self.deployment_list_path,
                                              function_name)
         deployment_info = self._create_request('GET', url)
